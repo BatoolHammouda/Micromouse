@@ -1,0 +1,184 @@
+this algorithm used a mapping of scores for all the maze, with the value being how many blocks is the current position far from the goal.
+
+Algorithm
+
+
+
+in each block, check all available neighbors, and store their scores.
+
+if the block has multiple available neighbors, put them in the decisions list.
+
+if its a normal block with 1 option, add it to the path for each element in decisions.
+
+take the minimum neighbor (greedy).
+
+flood fill the maze, by adding +1 for the value for each block that was visited in for previous decision section.
+
+steps are repeated untill goal is reached.
+
+
+
+this algorithm gave the best results by far.
+
+*************************************
+import API
+import sys
+import numpy as np
+
+def is_cross_roads():
+    return  (not API.wallLeft() and not API.wallRight() ) or ( not API.wallFront() and not API.wallRight()) or (not API.wallLeft() and not API.wallFront())
+
+
+def log(string):
+    sys.stderr.write("{}\n".format(string))
+    sys.stderr.flush()
+
+def turnRight(direction):
+    #overrides API to update direcction
+    API.turnRight()
+    direction = (direction + 1) % 4
+    return direction
+
+def turnLeft(direction):
+    #overrides API to update direcction
+    API.turnLeft()
+    direction = (direction - 1) % 4
+    return direction
+
+def moveForward(direction, currPos):
+    #overrides API to update currPos
+    if direction == 0:
+        currPos[0] += 1
+    elif direction == 1:
+        currPos[1] += 1
+    elif direction == 2:
+        currPos[0] -= 1
+    elif direction == 3:
+        currPos[1] -= 1
+    API.moveForward()
+    return currPos
+
+def setWall(direction, row, col):
+    if direction == 0:
+        API.setWall(col, row, "n")
+    elif direction == 1:
+        API.setWall(col, row, "e")
+    elif direction == 2:
+        API.setWall(col, row, "s")
+    elif direction == 3:
+        API.setWall(col, row, "w")
+
+def addNeighbor(direction, row,col, neighbors):
+    #adds a neighbor to the neighbors list
+    if direction == 0:
+        return (row + 1, col)
+    elif direction == 1:
+        return (row, col + 1)
+    elif direction == 2:
+        return (row - 1, col)
+    elif direction == 3:
+        return (row, col - 1)
+
+dec_counter =0
+mazeCost = [
+        [14,13,12,11,10, 9, 8, 7, 7, 8, 9,10,11,12,13,14],
+        [13,12,11,10, 9, 8, 7, 6, 6, 7, 8, 9,10,11,12,13],
+        [12,11,10, 9, 8, 7, 6, 5, 5, 6, 7, 8, 9,10,11,12],
+        [11,10, 9, 8, 7, 6, 5, 4, 4, 5, 6, 7, 8, 9,10,11],
+        [10, 9, 8, 7, 6, 5, 4, 3, 3, 4, 5, 6, 7, 8, 9,10],
+        [ 9, 8, 7, 6, 5, 4, 3, 2, 2, 3, 4, 5, 6, 7, 8, 9],
+        [ 8, 7, 6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8],
+        [ 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7],
+        [ 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7],
+        [ 8, 7, 6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8],
+        [ 9, 8, 7, 6, 5, 4, 3, 2, 2, 3, 4, 5, 6, 7, 8, 9],
+        [10, 9, 8, 7, 6, 5, 4, 3, 3, 4, 5, 6, 7, 8, 9,10],
+        [11,10, 9, 8, 7, 6, 5, 4, 4, 5, 6, 7, 8, 9,10,11],
+        [12,11,10, 9, 8, 7, 6, 5, 5, 6, 7, 8, 9,10,11,12],
+        [13,12,11,10, 9, 8, 7, 6, 6, 7, 8, 9,10,11,12,13],
+        [14,13,12,11,10, 9, 8, 7, 7, 8, 9,10,11,12,13,14]
+    ]
+
+direction = 0 # direction 0 = up, 1 = right, 2 = down, 3 = left
+currPos = [0,0]
+
+# decision positions
+decisions = []
+# all moves of each decision
+dec_moves = []
+
+while mazeCost[currPos[0]][currPos[1]] != 0:
+    row, col = currPos
+    API.setColor(col, row, "G")
+    for a in range(len(mazeCost)):
+            for b in range(len(mazeCost)):
+                API.setText(a, b, mazeCost[b][a])
+    #while we are not at the goal
+    neighbors = [(),(),()]# to store the neighbors of the current cell
+    neighbors_values = [float("inf"),float("inf"),float("inf")] #to store the values of the neighbors
+    if not API.wallFront():
+        #if there is a wall in front of us
+        neighbors[0] = addNeighbor(direction, row, col, neighbors)
+        neighbors_values[0] = mazeCost[neighbors[0][0]][neighbors[0][1]]
+    else:
+        setWall(direction, row, col)
+    if not API.wallRight():
+        #if there is a wall to the right of us
+        neighbors[1] = addNeighbor((direction + 1) % 4, row, col, neighbors)
+        neighbors_values[1] = mazeCost[neighbors[1][0]][neighbors[1][1]]
+    else:
+        setWall((direction + 1) % 4, row, col)
+    if not API.wallLeft():
+        #if there is a wall to the left of us
+        neighbors[2] = addNeighbor((direction - 1) % 4, row, col, neighbors)
+        neighbors_values[2] = mazeCost[neighbors[2][0]][neighbors[2][1]]
+    else:
+        setWall((direction - 1) % 4, row, col)
+
+
+
+
+    #now we will try to implement the floodfill algorithm
+
+    if decisions and (row,col) in decisions:
+        prev = (row,col)
+        if len(decisions) > 1:
+            for node in dec_moves[-2]:
+                mazeCost[node[0]][node[1]] = mazeCost[prev[0]][prev[1]] + 1
+                prev = node
+        #if the current position is the same as the last decision
+
+
+    if not neighbors[0] and not neighbors[1] and not neighbors[2]:
+        #make the cost huge so that we don't go back to this cell
+        mazeCost[row][col] = 100
+        direction = turnRight(direction)
+        direction = turnRight(direction)
+        for dec in dec_moves:
+            dec.append((row,col))
+        currPos = moveForward(direction, currPos)
+        #turn around if there are no neighbors
+    elif min(neighbors_values) == neighbors_values[1]:
+        #if the min value is in right of us
+        direction = turnRight(direction)
+        for dec in dec_moves:
+            dec.append((row,col))
+        currPos = moveForward(direction, currPos)
+    elif min(neighbors_values) == neighbors_values[0]:
+        #if the min value is to the front of us
+        for dec in dec_moves:
+            dec.append((row,col))
+        currPos = moveForward(direction, currPos)
+    elif min(neighbors_values) == neighbors_values[2]:
+        #if the min value is to the left of us
+        direction = turnLeft(direction)
+        for dec in dec_moves:
+            dec.append((row,col))
+        currPos = moveForward(direction, currPos)
+
+    #we will check if the robot took a decision
+    if is_cross_roads():
+        #if the robot took a decision
+        dec_moves.append([])
+        if (currPos[0],currPos[1]) not in decisions:
+            decisions.append((currPos[0],currPos[1]))

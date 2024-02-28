@@ -1,0 +1,95 @@
+this simple but complete algorithm lefty-righty, solved all mazes given, which really had me surprised, as the idea had no premise due to its simplicity, but we were shocked by the results.
+
+flip a coin (0, 1)
+
+use left-rule if 0
+
+if 1 , use right-rule
+
+
+
+********************
+import API
+import sys
+import random
+import math
+from scipy.spatial.distance import cityblock
+
+def log(string):
+    sys.stderr.write("{}\n".format(string))
+    sys.stderr.flush()
+
+def manhattan(p1):
+    return cityblock(p1,[7.5,7.5])
+
+def cal_possible_moves(curr_cor):
+    res = []
+    if not API.wallRight():
+        res += [[curr_cor[0]+1,curr_cor[1]]]
+
+    if not API.wallLeft():
+        res += [[curr_cor[0]-1,curr_cor[1]]]
+    if not API.wallFront():
+        res += [[curr_cor[0],curr_cor[1]+1]]
+    return res
+
+def turnLeft(direction):
+    API.turnLeft()
+    direction = (direction - 1) % 4
+    return direction
+
+def turnRight(direction):
+    API.turnRight()
+    direction = (direction + 1) % 4
+    return direction
+
+def moveForward(curr_cor,direction):
+    API.moveForward()
+    if direction == 0:
+        curr_cor[1] = curr_cor[1] + 1
+    elif direction == 1:
+        curr_cor[0] = curr_cor[0] + 1
+    elif direction == 2:
+        curr_cor[1] = curr_cor[1] - 1
+    elif direction == 3:
+        curr_cor[0] = curr_cor[0] - 1
+    return curr_cor,direction
+
+
+def main():
+    direction =  0 # looking up
+    curr_cor = [0,0] # starts from 0 , 0
+    log("RUNNING...")
+    API.setColor(0, 0, "G")
+    API.setText(0, 0, "abc")
+    goal_coordinates = [[7,7],[8,7],[7,8],[8,8]]
+    visitedNodes = [[0]*16]*16
+    while True:
+        #res = cal_possible_moves(curr_cor)
+        resu = str(curr_cor[0]) + " " +str(curr_cor[1])
+        API.setText(curr_cor[0],curr_cor[1] , resu)
+        #log("".join(str(res)))
+        if curr_cor in goal_coordinates:
+            log("GOAAAAAAAAL")
+            break
+        choice = random.randint(0, 1)
+        if choice == 0:
+            if not API.wallLeft():
+                direction = turnLeft(direction)
+            while API.wallFront():
+                direction = turnRight(direction)
+            curr_cor,direction =moveForward(curr_cor,direction)
+
+        if choice == 1:
+            if not API.wallRight():
+                direction = turnRight(direction)
+
+            while API.wallFront():
+                direction = turnLeft(direction)
+            curr_cor,direction = moveForward(curr_cor,direction)
+        API.setColor(curr_cor[0], curr_cor[1], "R")
+
+
+
+if __name__ == "__main__":
+    main()
